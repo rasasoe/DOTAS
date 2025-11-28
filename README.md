@@ -1,98 +1,53 @@
+# 🕵️ DOTAS v2.0  
+## Dark-web OSINT Threat Alert System
 
+![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat&logo=python&logoColor=white)
+![Network](https://img.shields.io/badge/Network-Tor%20Onion-7D4698?style=flat&logo=tor-browser&logoColor=white)
+![Focus](https://img.shields.io/badge/Focus-Threat%20Intelligence-red?style=flat)
+![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-blue?style=flat&logo=linux)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat)
 
-# 🕵️ DOTAS v1.0
-
-## **Dark-web OSINT Threat Alert System**
-
-다크웹(.onion) 및 공개 출처(OSINT)에서 특정 키워드·인디케이터(IOC)를 탐지하고,
-이를 **CSV 저장 + Telegram 알림**으로 전달하는 경량 위협 인텔리전스 시스템입니다.
-
----
-
-## 📌 **기능 개요**
-
-DOTAS v1.0은 다음과 같은 모듈로 구성됩니다:
-
-### **1. Dark Web 크롤링 (Tor 사용)**
-
-* `.onion` 주소 접근
-* Tor SOCKS5h 이용하여 DNS 요청까지 Tor 내부에서 처리
-
-### **2. OSINT 수집**
-
-* GitHub 기반 CTI 인덱스 (deepdarkCTI 등)
-* 텍스트 기반 페이지 자동 파싱
-
-### **3. 인디케이터(IOC) 자동 추출**
-
-* 이메일 / 도메인 정규식 기반 탐지
-* 키워드 기반 필터링 (“password”, “admin”, 조직 도메인 등)
-
-### **4. 중복 알림 방지 (IOC Persistence)**
-
-* `seen_indicators.txt`에 기록
-* 이미 본 인디케이터는 다시 알림 X (실제 SOC 운영 구조 반영)
-
-### **5. CSV 저장 + Telegram 실시간 알림**
-
-* `findings.csv`에 결과 저장
-* Telegram Bot API를 이용한 경고 알림
+> **DOTAS는 다크웹(.onion) 및 OSINT 소스에서 의심스러운 IOC(Indicator of Compromise)를 자동 수집하고,  
+> 이를 CSV 저장 + Telegram 실시간 경고로 전달하는 경량 위협 인텔리전스 자동화 시스템입니다.**
 
 ---
 
-## 🔧 설치 방법
+# 📌 주요 기능 (Features)
 
-### 1) 환경 준비
+### ✔ 1. Dark Web Crawler (Tor 기반)
+- `.onion` 주소 접근  
+- Tor SOCKS5h 사용 → **DNS 요청까지 Tor 내부에서 처리 (완전 익명성)**  
+- 웹 마켓/포럼 페이지 자동 수집
 
-```
-sudo apt update
-sudo apt install tor
-sudo service tor start
-```
+### ✔ 2. OSINT Collector
+- deepdarkCTI · GitHub 레포지토리  
+- 클리어웹(HTTPS) OSINT 자료 자동 수집
 
-### 2) Python 설치 패키지
+### ✔ 3. IOC 자동 분석
+- 이메일 / 도메인 Regex 매칭  
+- 키워드 기반 필터링  
+- HTML → Plain text 정규화
 
-```
-pip install requests beautifulsoup4 urllib3
-```
+### ✔ 4. 중복 알림 방지 (De-duplication)
+- IOC는 `seen_indicators.txt`에 기록  
+- 이미 알림 보낸 데이터는 재전송 없음
 
-### 3) Telegram 설정
-
-* BotFather → 봇 생성 → Bot Token 발급
-* @userinfobot → Chat ID 확인
-* 다음 코드 수정:
-
-```python
-TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
-CHAT_ID = "YOUR_CHAT_ID"
-```
-
-### 4) 실행
-
-```
-python3 dotas_v1.py
-```
+### ✔ 5. Telegram 실시간 알림
+- Bot API 사용  
+- SOC 환경처럼 **즉시 경고(Incident Alert)** 전송  
+- CSV 기록 (`findings.csv`) 자동 업데이트
 
 ---
 
-## 📁 파일 구조
+# ⚙ 시스템 아키텍처 (Architecture Diagram)
 
-```
-dotas_v1.py
-findings.csv              # 인디케이터 결과 저장
-seen_indicators.txt        # 중복 알림 방지 목록
-README.md
-```
-
----
-
-## ⚙️ 시스템 동작 흐름 (Architecture)
-
-```
+```text
             +------------------+
-            |   DARK WEB       | -- Tor --> (requests via socks5h)
+            |   DARK WEB       |
             |   (.onion)       |
             +------------------+
+                      |
+        (Tor SOCKS5h Proxy: 127.0.0.1:9050)
                       |
                       v
             +------------------+
@@ -101,196 +56,183 @@ README.md
             +------------------+
                       |
             +--------------------------+
-            |   Analyzer               |
-            | - BeautifulSoup cleaner  |
+            |      Analyzer            |
+            | - HTML -> Text clean     |
             | - Keyword filter         |
             | - Email/Domain extract   |
             +--------------------------+
                       |
-          +-----------+--------------+
-          |                          |
-          v                          v
-+-------------------+       +---------------------+
-|  CSV Logger       |       | Telegram Alert Bot  |
-| findings.csv      |       | send_telegram()     |
-+-------------------+       +---------------------+
+        +-------------+--------------+
+        |                            |
+        v                            v
++-------------------+      +-----------------------+
+|   CSV Logger      |      |  Telegram Alert Bot   |
+|  findings.csv     |      |  send_telegram()      |
++-------------------+      +-----------------------+
                   |
                   v
-        +------------------------+
-        |   seen_indicators.txt  |
-        | (중복 알림 방지 DB)     |
-        +------------------------+
+         +-----------------------+
+         |  seen_indicators.txt  |
+         |  (Duplicate Filter)   |
+         +-----------------------+
 ```
 
 ---
 
-# ⚠️ 주요 기술 난관 & 트러블슈팅 과정
+# 🛡 Threat Model (위협 모델)
 
-이 프로젝트의 핵심 난관은 크게 **3가지**였다.
-각 문제와 해결 과정을 정리했다.
+DOTAS는 다음과 같은 보안 위협 탐지를 목표로 설계됨:
 
----
-
-## 1️⃣ Tor 프록시 문제 — socks5 vs socks5h
-
-### ❌ 문제
-
-처음에는 `socks5://127.0.0.1:9050` 으로 요청을 보냈지만,
-`.onion` 사이트 접근 시 다음 오류가 발생했다:
-
-```
-NameResolutionError: DuckDuckGo...onion could not be resolved
-```
-
-이는 **DNS를 로컬에서 resolve하려고 시도했기 때문**이다.
+| 위협 유형 | 설명 |
+|----------|------|
+| **개인정보 유출** | 이메일, 계정, 도메인 유출 여부 탐지 |
+| **기업 내부 정보 노출** | 회사명/직급/문서 키워드 기반 탐지 |
+| **랜섬웨어 협박 페이지** | gang 사이트 게시물 자동 모니터링 |
+| **가짜 채용·스피어피싱 페이지** | 키워드 기반 조기 탐지 |
+| **자격 증명(credential) 유출** | password/admin 등의 흔적 식별 |
 
 ---
 
-### ✅ 해결
+# 📁 디렉토리 구조 (Project Structure)
 
-→ **`socks5h://` 를 사용해야 Tor 내부에서 DNS 해석을 수행한다.**
+```text
+DOTAS/
+│── dotas_v2.py           # 메인 실행 파일
+│── findings.csv          # 수집된 IOC 로그
+│── seen_indicators.txt   # 중복 알림 방지 DB
+│── README.md             # 설명 문서
+└── requirements.txt      # 패키지 목록
+```
+
+---
+
+# 🧩 Requirements (환경 요구사항)
+
+```
+Python 3.9+
+Tor service (0.4.x 이상)
+Kali Linux 또는 Linux 계열 OS
+Stable Internet + SOCKS Proxy 가능 환경
+```
+
+필수 패키지:
+
+```
+requests
+beautifulsoup4
+pysocks
+urllib3
+python-telegram-bot
+```
+
+설치:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# 🔧 설치 및 실행 방법
+
+### 1) Tor 설치 및 실행
+
+```bash
+sudo apt update
+sudo apt install tor -y
+sudo service tor start
+```
+
+### 2) 코드 설정
 
 ```python
-PROXIES = {
-    "http": "socks5h://127.0.0.1:9050",
-    "https": "socks5h://127.0.0.1:9050"
-}
+TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
+CHAT_ID = "YOUR_CHAT_ID"
 ```
 
-* socks5  : DNS 로컬에서 → 오류
-* socks5h : DNS까지 Tor가 처리 → 정상 접속
+### 3) 실행
 
----
-
-## 2️⃣ 동기 I/O (requests) + 비동기(async) 혼용 문제
-
-### ❌ 문제
-
-처음에는 이렇게 작성했다:
-
-```python
-async def main():
-    while True:
-        alert_msg = check_darkweb()   # 동기 함수 호출
-        await send_alert(alert_msg)
-        await asyncio.sleep(60)
-```
-
-`check_darkweb()` 내부가 **blocking I/O**이므로
-async 루프가 제대로 동작하지 않음 → 전체 loop가 멈짐.
-
----
-
-### ✅ 해결
-
-동기 HTTP 요청(heavy blocking)을
-비동기 루프 내에서 **쓰레드로 오프로드**:
-
-```python
-alert_msg = await asyncio.to_thread(check_darkweb)
-```
-
-→ 이벤트 루프는 계속 살아 있음
-→ 텔레그램 알림은 async로, HTTP는 동기로 최적 분리
-
----
-
-## 3️⃣ 텔레그램 알림이 반복 전송되는 문제
-
-### ❌ 문제
-
-수집 대상 페이지에 동일 키워드가 계속 존재하면
-**60초마다 같은 알림을 계속 보내는 문제** 발생.
-
-예:
-
-```
-[경고] bitcoin 발견
-[경고] bitcoin 발견
-[경고] bitcoin 발견
-...
+```bash
+python3 dotas_v2.py
 ```
 
 ---
 
-### ✅ 해결
-
-중복을 기록하는 로직 추가:
-
-```python
-HISTORY_FILE = "seen_indicators.txt"
-
-def is_new_indicator(value):
-    return value not in seen_list
-```
-
-→ 한번 본 이메일/도메인은 파일에 기록되고
-→ 다음 사이클에서는 알림 제외
-
-이로써 **SOC 운영 수준의 알림 피로도 해결(De-duplication)** 구현.
-
----
-
-## 4️⃣ HTML 파싱 정확도 향상
-
-### ❌ 문제
-
-키워드가 HTML 태그 안에 있어서 제대로 검색 안 됨:
-
-```html
-<span>pri<b>va</b>cy</span>
-```
-
-### ✅ 해결
-
-BeautifulSoup으로 정규화 후 텍스트만 사용:
-
-```python
-soup = BeautifulSoup(raw, "html.parser")
-text = soup.get_text(separator="\n")
-```
-
-→ 모든 태그 제거
-→ 키워드 필터 & IOC 탐지 정확도 상승
-
----
-
-## 5️⃣ SSL 인증 문제 — verify=False 필요
-
-일부 DarkWeb 프록시나 `.onion` 서비스는
-정상적인 SSL 체인이 없어서 인증서 오류 발생:
+# 📌 실행 로그 예시 (Example Output)
 
 ```
-ssl.SSLError: CERTIFICATE_VERIFY_FAILED
-```
+>> [DOTAS] Dark-web & OSINT Threat Monitor Started.
 
-### 해결
-
-```python
-requests.get(..., verify=False)
-```
-
-* SSL 경고 끄기:
-
-```python
-urllib3.disable_warnings(...)
-```
-
----
-
-# 🚀 최종 실행 예시 로그
-
-```
->> [DOTAS] 다크웹 & OSINT 위협 모니터링 시스템 가동
-
-[Cycle 시작] 2025-11-29 13:00:00
-[*] 소스 처리 시작: DuckDuckGo Onion
-[+] Fetch 성공: ...onion/ (size=117030)
-[탐지] DuckDuckGo Onion에서 domain 발견: privacy.com
+[Cycle] 2025-11-30 13:00
+[*] Source: DuckDuckGo Onion
+[+] Fetch 성공 (size=117030)
+[탐지] domain 발견: privacy.com
 [*] Telegram 전송 완료
-
-[Cycle 종료] 대기 300초...
+------------------------------------
 ```
 
 ---
+
+# 🩺 Troubleshooting (트러블슈팅)
+
+### 1️⃣ `socks5`는 왜 안 되고 `socks5h`가 필요한가?
+- `socks5` → DNS를 로컬이 직접 해석 → `.onion` 불가  
+- **`socks5h` → DNS도 Tor 내부에서 처리 → 필수**
+
+---
+
+### 2️⃣ 비동기 루프가 멈춤 (async + requests 충돌)
+`requests`는 synchronous blocking → `asyncio` 루프 멈춤  
+✔ 해결:  
+```python
+await asyncio.to_thread(check_darkweb)
+```
+스레드로 오프로드하여 비동기 루프 보존.
+
+---
+
+### 3️⃣ 중복 알림 폭주 (Alert Fatigue)
+✔ 해결: `seen_indicators.txt`에 IOC 저장  
+✔ 이미 본 IOC는 절대 재전송 안 함
+
+---
+
+### 4️⃣ HTML 태그 때문에 키워드 탐지 실패
+✔ 해결:  
+```python
+BeautifulSoup(html, "html.parser").get_text()
+```
+→ 완전한 plain text 환경에서 regex 적용
+
+---
+
+### 5️⃣ SSL 인증서 오류 (`CERTIFICATE_VERIFY_FAILED`)
+✔ 해결:
+```python
+verify=False
+urllib3.disable_warnings()
+```
+
+---
+
+# 📄 License (MIT)
+
+본 프로젝트는 MIT 라이센스로 배포됩니다.  
+자유롭게 수정/확장/재사용 가능합니다.
+
+---
+
+# ⚠️ Legal Disclaimer
+
+> **본 도구는 교육·연구·디지털 포렌식 학습용으로 제작되었습니다.**
+>
+> 허가받지 않은 시스템/네트워크/다크웹 자원에 대한 무단 접근, 스크래핑, 스캐닝, 크롤링은  
+> 대한민국 「정보통신망법」 및 국제 사이버 범죄 관련 법에 따라 처벌될 수 있습니다.
+>
+> 모든 테스트는 **본인이 소유한 자산 또는 허가받은 환경에서만** 수행해야 합니다.  
+> 개발자는 본 도구를 오남용하여 발생하는 어떤 법적 책임도 지지 않습니다.
+
+---
+
+# 🎉 DOTAS v2.0 — Complete.
 
