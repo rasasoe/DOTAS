@@ -1,4 +1,4 @@
-🕵️ DOTAS v1.0
+#🕵️ DOTAS v1.0
 Dark-web OSINT Threat Alert System
 
 다크웹(.onion) 및 공개 출처(OSINT)에서 특정 키워드·인디케이터(IOC)를 탐지하고,
