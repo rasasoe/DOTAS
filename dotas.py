@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DOTAS v1.0
+DOTAS v1.1
 (Dark-web OSINT Threat Alert System)
 
 기능:
@@ -58,16 +58,27 @@ WATCH_KEYWORDS = [
     "internal"
 ]
 
-# 모니터링 대상 소스 (예시)
+# ─────────────────────
+# 다크웹 소스 (.onion)
+# ─────────────────────
 DARKWEB_SOURCES = [
     {
-        "name": "DuckDuckGo Onion",
-        "url": "https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twag66f7gw53.onion/",
+        # Ahmia: 대표적인 onion 인덱스 검색엔진
+        "name": "Ahmia Onion Index",
+        "url": "http://msydqstlz2kzerdg.onion/",
         "use_tor": True,
     },
-    # 필요 시 Ahmia 등 인덱스형 .onion 추가
+    {
+        # DarkFail: 다크웹 URL 디렉토리 (PGP 검증 링크 제공)
+        "name": "DarkFail Onion Directory",
+        "url": "http://darkfailenbsdla5mal2mxn2uz66od5vtzd5qozslagrfzachha3f3id.onion/",
+        "use_tor": True,
+    },
 ]
 
+# ─────────────────────
+# 일반 OSINT 소스 (clearnet)
+# ─────────────────────
 OSINT_SOURCES = [
     {
         "name": "DeepDarkCTI Ransomware Index",
@@ -304,9 +315,9 @@ def main_loop(interval_sec: int = 300) -> None:
     interval_sec: 한 사이클 끝난 후 대기 시간 (초)
     """
     print(">> [DOTAS] 다크웹 & OSINT 위협 모니터링 시스템 가동")
-    print(f"   - CSV 파일  : {OUTPUT_CSV}")
+    print(f"   - CSV 파일   : {OUTPUT_CSV}")
     print(f"   - History 파일: {HISTORY_FILE}")
-    print(f"   - Interval   : {interval_sec}초\n")
+    print(f"   - Interval    : {interval_sec}초\n")
 
     init_csv(OUTPUT_CSV)
 
