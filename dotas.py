@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-DOTAS v1.1
+DOTAS v1.3
 (Dark-web OSINT Threat Alert System)
 
 기능:
-- Tor 프록시(socks5h)를 이용해 다크웹(.onion) 및 일반 OSINT 소스 수집
+- Tor 프록시(socks5h)를 이용해 다크웹(.onion) 인덱스 + 일반 OSINT 소스 수집
 - 텍스트에서 이메일/도메인 인디케이터 추출
 - 관심 키워드 기반 필터링
 - CSV로 탐지 내역 저장
@@ -55,21 +55,21 @@ WATCH_KEYWORDS = [
     "password",
     "leak",
     "admin",
-    "internal"
+    "internal",
 ]
 
 # ─────────────────────
-# 다크웹 소스 (.onion)
+# 다크웹 인덱스 / 디렉토리 (Tor 필수)
 # ─────────────────────
 DARKWEB_SOURCES = [
     {
-        # Ahmia: 대표적인 onion 인덱스 검색엔진
-        "name": "Ahmia Onion Index",
-        "url": "http://msydqstlz2kzerdg.onion/",
+        # Ahmia 공식 onion (ahmia.fi에서 경고와 함께 안내하는 v3 주소)
+        "name": "Ahmia Onion Search",
+        "url": "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/",
         "use_tor": True,
     },
     {
-        # DarkFail: 다크웹 URL 디렉토리 (PGP 검증 링크 제공)
+        # dark.fail: clearnet에서 직접 공개한 onion 주소
         "name": "DarkFail Onion Directory",
         "url": "http://darkfailenbsdla5mal2mxn2uz66od5vtzd5qozslagrfzachha3f3id.onion/",
         "use_tor": True,
